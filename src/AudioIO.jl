@@ -1,7 +1,5 @@
 module AudioIO
 
-using Multirate
-
 # export the basic API
 export play, stop, get_audio_devices
 
