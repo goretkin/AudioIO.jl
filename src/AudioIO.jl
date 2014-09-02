@@ -1,5 +1,7 @@
 module AudioIO
 
+using Multirate
+
 # export the basic API
 export play, stop, get_audio_devices
 
@@ -59,6 +61,7 @@ end
 # Get binary dependencies loaded from BinDeps
 include( "../deps/deps.jl")
 include("nodes.jl")
+include("filternode.jl")
 include("portaudio.jl")
 include("sndfile.jl")
 include("operators.jl")
