@@ -1,6 +1,10 @@
 import Multirate: FIRFilter, filt!, firdes, outputlength, FIRResponse, LOWPASS, HIGHPASS
 
-export Filt, FIRResponse, HIGHPASS, LOWPASS
+export  Filt,
+        Resample,
+        FIRResponse,
+        HIGHPASS,
+        LOWPASS
 
 type FilterRenderer <: AudioRenderer
     in1::AudioNode
@@ -36,4 +40,25 @@ typealias Filt AudioNode{FilterRenderer}
 
 function Filt( in1::AudioNode, cutoff::Real; response::FIRResponse = LOWPASS, transition::Real = 0.1*cutoff, samplerate = 44100 )
     Filt( FilterRenderer( in1, cutoff, transition = transition, samplerate = samplerate, response = response ) )
+end
+
+
+typealias Resample AudioNode{FilterRenderer}
+
+function Resample( in1::AudioNode, ratio::Rational )
+
+    ratio == 1//1 && error( "can't resample by a factor of 1" )
+
+    interpolation = num( ratio )
+    decimation    = den( ratio )
+
+    cutoff              = 0.4/decimation
+    transitionWidth     = 0.1/decimation
+    stopbandAttenuation = 50
+
+    h      = firdes( cutoff, transitionWidth, stopbandAttenuation )
+    h      = h.*interpolation
+    filter = FIRFilter( h, ratio )
+
+    Resample( FilterRenderer( in1, filter ) )
 end
