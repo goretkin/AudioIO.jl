@@ -340,3 +340,80 @@ function render(node::LinRampRenderer, device_input::AudioBuf, info::DeviceInfo)
 
     return node.buf
 end
+
+
+
+type MemorylessNodeRenderer <: AudioRenderer
+    f::Function
+    buf::AudioBuf
+
+    function MemorylessNodeRenderer(f::Function)
+        new(f,AudioSample[])
+    end
+end
+
+function render(node::MemorylessNodeRenderer,input::AudioBuf,info::DeviceInfo)
+    @assert size(input, 1) == info.buf_size
+
+    if length(node.buf) != info.buf_size
+        resize!(node.buf, info.buf_size)
+    end
+
+    output = node.buf
+
+    i::Int = 1
+    while i <= info.buf_size
+        output[i] = node.f(input[i])
+        i += 1
+    end
+    return output
+end
+
+typealias MemorylessNode AudioNode{MemorylessNodeRenderer}
+export MemorylessNode
+
+
+
+
+
+
+
+type ArrayRecorderRenderer <: AudioRenderer
+    arr::AudioBuf
+    arr_index::Int
+    buf::AudioBuf
+
+    ArrayRecorderRenderer(arr::AudioBuf) = new(arr, 1, AudioSample[])
+end
+
+typealias ArrayRecorderNode AudioNode{ArrayRecorderRenderer}
+export ArrayRecorderNode
+
+function render(node::ArrayRecorderRenderer, input::AudioBuf, info::DeviceInfo)
+    @assert size(input, 1) == info.buf_size
+    range_end = min(node.arr_index + info.buf_size-1, length(node.arr))
+    block_size = range_end - node.arr_index + 1
+    if length(node.buf) != block_size
+        resize!(node.buf, block_size)
+        node.buf[:] = 0
+    end
+
+    
+    copy!(node.arr,node.arr_index,input,1,block_size)
+    node.arr_index = range_end + 1
+
+    if node.arr_index == length(node.arr)
+        return AudioSample[] #return an array of small size to signal that this node is done
+    end
+    return node.buf
+
+end
+
+
+
+
+
+
+
+
+
