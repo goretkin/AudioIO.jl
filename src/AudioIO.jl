@@ -62,6 +62,7 @@ include("nodes.jl")
 include("portaudio.jl")
 include("sndfile.jl")
 include("operators.jl")
+include("textcomm.jl") #doesn't belong here
 
 ############ Exported Functions #############
 
