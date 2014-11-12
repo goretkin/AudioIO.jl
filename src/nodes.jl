@@ -353,9 +353,9 @@ type MemorylessNodeRenderer <: AudioRenderer
 end
 
 function render(node::MemorylessNodeRenderer,input::AudioBuf,info::DeviceInfo)
-    @assert size(input, 1) == info.buf_size
+    @assert size(input, 1) <= info.buf_size
 
-    if length(node.buf) != info.buf_size
+    if length(node.buf) != size(input, 1)
         resize!(node.buf, info.buf_size)
     end
 
@@ -371,11 +371,6 @@ end
 
 typealias MemorylessNode AudioNode{MemorylessNodeRenderer}
 export MemorylessNode
-
-
-
-
-
 
 
 type ArrayRecorderRenderer <: AudioRenderer
@@ -408,6 +403,41 @@ function render(node::ArrayRecorderRenderer, input::AudioBuf, info::DeviceInfo)
     return node.buf
 
 end
+
+
+type ComposeNodeRenderer <: AudioRenderer
+    first::AudioNode
+    second::AudioNode
+    buf::AudioBuf
+    #input to ComposeNode first goes through first, then second, then that is output.
+    ComposeNodeRenderer(first::AudioNode,second::AudioNode) = new(first, second, AudioSample[])
+end
+
+typealias ComposeNode AudioNode{ComposeNodeRenderer}
+export ComposeNode
+
+function render(node::ComposeNodeRenderer, input::AudioBuf, info::DeviceInfo)
+    @assert size(input, 1) <= info.buf_size   #might get an incomplete buffer
+
+    first = node.first
+    second = node.second
+
+    out1 = render(first.renderer,input,info)
+    out2 = render(second.renderer,out1,info)
+    
+    @assert size(out2,1) <= info.buf_size
+
+    block_size = size(out2,1)
+    if length(node.buf) != block_size
+        resize!(node.buf, block_size)
+    end
+
+    copy!(node.buf,1,out2,1,block_size)
+
+    return node.buf
+
+end
+
 
 
 
