@@ -356,13 +356,13 @@ function render(node::MemorylessNodeRenderer,input::AudioBuf,info::DeviceInfo)
     @assert size(input, 1) <= info.buf_size
 
     if length(node.buf) != size(input, 1)
-        resize!(node.buf, info.buf_size)
+        resize!(node.buf, size(input, 1))
     end
 
     output = node.buf
 
     i::Int = 1
-    while i <= info.buf_size
+    while i <= length(node.buf)
         output[i] = node.f(input[i])
         i += 1
     end

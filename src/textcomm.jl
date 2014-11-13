@@ -159,7 +159,7 @@ type AsyncSerialRenderer <: AudioRenderer
     state::Symbol
     buf::AudioBuf
     current_code::Uint8 
-    AsyncSerialRenderer(code::Task) = new(code,50,5,1,1.5,0,:nothing,AudioSample[],0)
+    AsyncSerialRenderer(code_stream::Task) = new(code_stream,50,5,1,1.5,0,:nothing,AudioSample[],0)
 end
 
 typealias AsyncSerialRendererNode AudioNode{AsyncSerialRenderer}
@@ -191,14 +191,16 @@ function render(node::AsyncSerialRenderer, device_input::AudioBuf, info::DeviceI
                 return AudioSample[] #return empty buffer to signal I'm done
             elseif node.code_stream.state == :waiting
                 node.state = :waiting_for_codes
+                println("now state is: $(node.state)")
                 node.buf[i] = -1 #resting value
                 i += 1
             else
+                println("state right before consume: $(node.code_stream.state)")
                 c = consume(node.code_stream) #won't block because it's not waiting... right?
                 if c != nothing
                     node.current_code = c
                     node.state = :transmitting_code
-                    #println("now state is: $(node.state)")
+                    println("now state is: $(node.state)")
                     node.sample_index = 0 #how many samples of this code have we transmitted
                 end
             end
@@ -218,6 +220,7 @@ function render(node::AsyncSerialRenderer, device_input::AudioBuf, info::DeviceI
 
             if node.sample_index >= samples_per_start + samples_per_code + samples_per_stop
                 node.state = :take_code
+                println("now state is: $(node.state)")
             end
         end
     end
