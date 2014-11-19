@@ -16,7 +16,7 @@ sleep( 0.5 )
 
 # seem to have to redefine tones to get the filtering to work after previously playing the unfiltered tones
 tones     = SinOsc( 440 ) + SinOsc( 7040 )
-lowpassed = Filt( tones, 4e3 )
+lowpassed = ComposeNode( tones, Filt( 4e3 ) )
 
 println( "Playing lowpass filterned tones" )
 play( lowpassed )
@@ -27,7 +27,7 @@ stop( lowpassed )
 sleep( 0.5 )
 
 tones      = SinOsc( 440 ) + SinOsc( 7040 )
-highpassed = Filt( tones, 4e3, response = HIGHPASS )
+highpassed = ComposeNode( tones, Filt( 4e3, response = HIGHPASS ) )
 
 println( "Playing highpass filterned tones" )
 play( highpassed )

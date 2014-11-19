@@ -101,6 +101,8 @@ function portaudio_task(stream::PortAudioStream)
             for i in (length(rendered)+1):n
                 buffer[i] = 0.0
             end
+            stream.info.sample += stream.info.buf_size
+            #println("inc sample: $(stream.info.sample)")
             while Pa_GetStreamWriteAvailable(stream.stream) < n
                 sleep(0.005)
             end

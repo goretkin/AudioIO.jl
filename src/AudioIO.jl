@@ -1,7 +1,7 @@
 module AudioIO
 
 # export the basic API
-export play, stop, get_audio_devices
+export play, stop, get_audio_devices, set_stream, copy
 
 # default stream used when none is given
 _stream = nothing
@@ -30,7 +30,15 @@ abstract AudioInterface
 type DeviceInfo
     sample_rate::Float32
     buf_size::Integer
+    sample::Int64 #serves as a timebase for the nodes
+    DeviceInfo(sample_rate::Real, buf_size::Integer) = new(float32(sample_rate),buf_size,0)
+    DeviceInfo(sample_rate::Real, buf_size::Integer, sample::Int64) = new(float32(sample_rate),buf_size,sample)
 end
+
+function copy(d::DeviceInfo)
+    return DeviceInfo(d.sample_rate,d.buf_size,d.sample)
+end
+
 
 type AudioNode{T<:AudioRenderer}
     active::Bool
@@ -52,18 +60,20 @@ function render(node::AudioNode, input::AudioBuf, info::DeviceInfo)
         end
         return result
     else
+        warn("in render: $(typeof(node)) node is inactive")
         return AudioSample[]
     end
 end
 
 # Get binary dependencies loaded from BinDeps
 include( "../deps/deps.jl")
-include("nodes.jl")
 include("filternode.jl")
+include("nodes.jl")
 include("portaudio.jl")
 include("sndfile.jl")
 include("operators.jl")
 include("textcomm.jl") #doesn't belong here
+include("arraystream.jl")
 
 ############ Exported Functions #############
 
@@ -96,5 +106,11 @@ end
 function get_audio_devices()
     return get_portaudio_devices()
 end
+
+function set_stream(stream)
+    global _stream
+    _stream = stream
+end
+
 
 end # module AudioIO
