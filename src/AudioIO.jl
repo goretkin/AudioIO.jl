@@ -73,7 +73,7 @@ include("portaudio.jl")
 include("sndfile.jl")
 include("operators.jl")
 include("textcomm.jl") #doesn't belong here
-include("arraystream.jl")
+#include("arraystream.jl")
 
 ############ Exported Functions #############
 
